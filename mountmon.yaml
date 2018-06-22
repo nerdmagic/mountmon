@@ -1,0 +1,15 @@
+---
+daemonize: False
+interval: 20.0
+zabbix: True
+zabbix_address: '10.11.12.13'
+zabbix_trigger: 'cephfs_fuse.error'
+logfile: 'test_mountmon.log'
+loglevel: DEBUG
+remount: True
+mountpoints:
+  '/opt/box/mnt/tpalmer':
+    type: 'cephfs-fuse'
+    checkdir: 'monitor'
+    checkfile: 'tpalmer.host'
+    write_check: True
