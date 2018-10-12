@@ -104,7 +104,11 @@ class mountmon (object):
         return RunCommand(['/usr/bin/mount', mp])
 
     def Umount(self, mp):
-        return RunCommand(['/usr/bin/umount', '-l', mp])
+        result = RunCommand(['/usr/bin/umount', mp])
+        if result:
+            return result
+        else:
+            return RunCommand(['/usr/bin/umount', '-l', mp])
 
     def MountMon(self, mp):
         checkdir = "{}/{}".format(mp, self.cfg['mountpoints'][mp]['checkdir'])
