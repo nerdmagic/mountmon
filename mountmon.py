@@ -101,10 +101,10 @@ class mountmon (object):
         self.logger.error(output)
 
     def Mount (self, mp):
-        return RunCommand(["/usr/bin/mount", mp])
+        return RunCommand(['/usr/bin/mount', mp])
 
     def Umount(self, mp):
-        return RunCommand(["/usr/bin/umount", mp])
+        return RunCommand(['/usr/bin/umount', '-l', mp])
 
     def MountMon(self, mp):
         checkdir = "{}/{}".format(mp, self.cfg['mountpoints'][mp]['checkdir'])
@@ -114,7 +114,7 @@ class mountmon (object):
         if not os.path.ismount(mp):
             if self.cfg['remount']:
                 if self.Mount(mp):
-                    self.logger.warning("mounted {}".format(mp))
+                    self.Error("mounted {}".format(mp), 1)
                 else:
                     self.Error("{} not mounted, could not mount it.".format(mp), 1)
                     return 1
@@ -129,14 +129,14 @@ class mountmon (object):
         except OSError:
             if self.cfg['remount']:
                 if self.Umount(mp):
-                    self.logger.warning("Unmounted {}".format(mp))
+                    self.Error("{} not remounted, unmounted it".format(mp), 2)
+                    if self.Mount(mp):
+                        self.Error("Attempted remount of {}".format(mp), 2)
+                    else:
+                        self.Error("Unmounted stale mountpoint {}, but cannot remount".format(mp), 2)
+                        return 2
                 else:
                     self.Error("{} not readable, and could not unmount it.".format(mp), 2)
-                    return 2
-                if self.Mount(mp):
-                    self.logger.warning("Remounted {}".format(mp))
-	        else:
-		    self.Error("Unmounted stale mountpoint, but cannot remount {}".format(mp))
                     return 2
             else:
                 self.Error("{} not readable, probably stale mount.".format(mp), 2)
