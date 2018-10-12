@@ -113,13 +113,15 @@ class mountmon (object):
         ## mountpoint check
         if not os.path.ismount(mp):
             if self.cfg['remount']:
+                self.Error("{} found unmounted, attempting to mount".format(mp), 1)
                 if self.Mount(mp):
-                    self.Error("mounted {}".format(mp), 1)
+                    ## insert delay before attempting to access
+                    time.sleep(2)
                 else:
-                    self.Error("{} not mounted, could not mount it.".format(mp), 1)
+                    self.Error("{} could not be mounted".format(mp), 1)
                     return 1
             else:
-                self.Error("{} not mounted".format(mp), 1)
+                self.Error("{} is not mounted".format(mp), 1)
                 return 1
 
         ## list mountpoint directory
@@ -128,18 +130,19 @@ class mountmon (object):
             os.listdir(mp)
         except OSError:
             if self.cfg['remount']:
+                self.Error("mountpoint {} appears stale, attmepting remount".format(mp), 2)
                 if self.Umount(mp):
-                    self.Error("{} not remounted, unmounted it".format(mp), 2)
+                    time.sleep(2)
                     if self.Mount(mp):
-                        self.Error("Attempted remount of {}".format(mp), 2)
+                        time.sleep(2)
                     else:
                         self.Error("Unmounted stale mountpoint {}, but cannot remount".format(mp), 2)
                         return 2
                 else:
-                    self.Error("{} not readable, and could not unmount it.".format(mp), 2)
+                    self.Error("{} could not be unmounted for remount".format(mp), 2)
                     return 2
             else:
-                self.Error("{} not readable, probably stale mount.".format(mp), 2)
+                self.Error("{} not readable, appears stale".format(mp), 2)
                 return 2
 
         ## file creation/writing check                 
