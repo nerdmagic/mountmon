@@ -3,7 +3,7 @@
 """
 mountmon.py -- daemon to monitor mountpoints
 
-usage:  mountmon.py [ -c <configfile> ]
+usage:  mountmon.py [ -c <cfgfile> | --cfgfile=<cfgfile> ] [ -z | --zabbix_clear ]
 
 exit codes, also sent to Zabbix if configured:
              0 = good
@@ -24,6 +24,7 @@ import time
 import subprocess
 import sys
 import yaml
+import argparse
 from pyzabbix import ZabbixSender, ZabbixMetric
 
 
@@ -191,17 +192,22 @@ class mountmon (object):
 
 if __name__ == '__main__':
 
-    if len(sys.argv) > 1:
-        if len(sys.argv) != 3 or sys.argv[1] != "-c":
-            print(__doc__)
-            exit
-        else:
-            cfgfile = sys.argv[2]
-    else:
-        cfgfile = '/etc/mountmon/mountmon.yaml'
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-c', '--cfgfile', dest='cfgfile', help='Config file path',
+            default='/etc/mountmon/mountmon.yaml')
+    parser.add_argument('-z', '--zabbix_clear', help='Clear Zabbix alert', action='store_true')
+    args = parser.parse_args()
 
     monitor = mountmon()
-    monitor.GetConfig(cfgfile)
+    monitor.GetConfig(args.cfgfile)
+
+    ## For -z to clear zabbix: don't daemonize, send a 0, and exit
+    if args.zabbix_clear:
+        print("Clearing zabbix errors...")
+        monitor.cfg['daemonize'] = False
+        monitor.SetLogging()
+        monitor.ZabbixSend(0)
+        sys.exit()
 
     if monitor.cfg['daemonize']:
         context = daemon.DaemonContext (
